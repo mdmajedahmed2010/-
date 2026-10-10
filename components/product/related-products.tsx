@@ -1,14 +1,12 @@
 /**
- * BIBAZ — Related Products Section
- * "You may also like" — same category products
- * SOP §২ — Frontend Plan F3.12
- *
- * TODO: Replace with server action query (Phase 3)
+ * PULSAR FASHION — Related Products Section
+ * "You May Also Like" — Streetwear recommendations & color variants
  */
 
 import { SectionHeading } from "@/components/ui/section-heading";
 import { ProductCard, type ProductCardProps } from "./product-card";
 import { prisma } from "@/lib/db";
+import { ALL_PRODUCTS } from "@/lib/demo-data";
 
 interface RelatedProductsProps {
   categorySlug: string;
@@ -19,30 +17,13 @@ export async function RelatedProducts({ categorySlug, currentProductId }: Relate
   let dbProducts: any[] = [];
 
   try {
-    // 1. First attempt: Same category products
-    dbProducts = await prisma.product.findMany({
-      where: {
-        category: { slug: categorySlug },
-        status: "ACTIVE",
-        ...(currentProductId ? { id: { not: currentProductId } } : {}),
-      },
-      include: {
-        variants: {
-          select: { price: true, images: true },
-        },
-        category: { select: { name: true } },
-      },
-      take: 4,
-      orderBy: { createdAt: "desc" },
-    });
-
-    // 2. Second attempt: Backfill with any other active products if fewer than 4 found
-    if (dbProducts.length < 4) {
-      const existingIds = [currentProductId, ...dbProducts.map((p) => p.id)].filter(Boolean) as string[];
-      const moreProducts = await prisma.product.findMany({
+    if (process.env.DATABASE_URL) {
+      // 1. Same category products
+      dbProducts = await prisma.product.findMany({
         where: {
+          category: { slug: categorySlug },
           status: "ACTIVE",
-          id: { notIn: existingIds },
+          ...(currentProductId ? { id: { not: currentProductId } } : {}),
         },
         include: {
           variants: {
@@ -50,82 +31,75 @@ export async function RelatedProducts({ categorySlug, currentProductId }: Relate
           },
           category: { select: { name: true } },
         },
-        take: 4 - dbProducts.length,
+        take: 4,
         orderBy: { createdAt: "desc" },
       });
-      dbProducts = [...dbProducts, ...moreProducts];
+
+      // 2. Backfill with any other active products if fewer than 4 found
+      if (dbProducts.length < 4) {
+        const existingIds = [currentProductId, ...dbProducts.map((p) => p.id)].filter(Boolean) as string[];
+        const moreProducts = await prisma.product.findMany({
+          where: {
+            status: "ACTIVE",
+            id: { notIn: existingIds },
+          },
+          include: {
+            variants: {
+              select: { price: true, images: true },
+            },
+            category: { select: { name: true } },
+          },
+          take: 4 - dbProducts.length,
+          orderBy: { createdAt: "desc" },
+        });
+        dbProducts = [...dbProducts, ...moreProducts];
+      }
     }
   } catch (err) {
     console.error("[RELATED_PRODUCTS] Database error:", err);
   }
 
-  // 3. Fallback products if DB is unreachable or empty
-  const fallbackProducts: ProductCardProps[] = [
-    {
-      id: "related-1",
-      name: "Self Print Shimmery Velvet Kaftan",
-      slug: "self-print-shimmery-velvet-kaftan",
-      price: 7550,
-      image: "/images/products/placeholder.svg",
-      category: "Kaftan",
-    },
-    {
-      id: "related-2",
-      name: "Mid Length Tye Dye Crape Kaftan",
-      slug: "mid-length-tye-dye-crape-kaftan",
-      price: 5550,
-      image: "/images/products/placeholder.svg",
-      category: "Kaftan",
-    },
-    {
-      id: "related-3",
-      name: "Royal Zari Embroidered Silk Kaftan",
-      slug: "royal-zari-embroidered-silk-kaftan",
-      price: 8900,
-      image: "/images/products/placeholder.svg",
-      category: "Kaftan",
-    },
-    {
-      id: "related-4",
-      name: "Casual Tye Dye Crape Kaftan",
-      slug: "casual-tye-dye-crape-kaftan",
-      price: 4850,
-      image: "/images/products/placeholder.svg",
-      category: "Kaftan",
-    },
-  ];
+  // 3. Guaranteed Pulsar Fashion fallback products from inventory
+  const filteredDemos = ALL_PRODUCTS.filter((p) => p.id !== currentProductId);
+  const sameCategoryDemos = filteredDemos.filter(
+    (p) => p.category?.toLowerCase().includes(categorySlug.toLowerCase()) || categorySlug.includes("polo")
+  );
+  const fallbackList = sameCategoryDemos.length >= 4 
+    ? sameCategoryDemos.slice(0, 4)
+    : [...sameCategoryDemos, ...filteredDemos.filter((p) => !sameCategoryDemos.includes(p))].slice(0, 4);
 
   const relatedProducts: ProductCardProps[] =
     dbProducts.length > 0
-      ? dbProducts.map((p: any) => {
+      ? dbProducts.map((p: any, i: number) => {
           const prices = p.variants?.map((v: any) => Number(v.price)) || [];
-          const minPrice = prices.length > 0 ? Math.min(...prices) : Number(p.basePrice || 2500);
+          const minPrice = prices.length > 0 ? Math.min(...prices) : Number(p.basePrice || 750);
 
           const firstVariant: any = p.variants?.[0];
           const variantImages = firstVariant?.images;
           const image =
             Array.isArray(variantImages) && variantImages.length > 0
               ? (variantImages[0] as string)
-              : "/images/products/placeholder.svg";
+              : (fallbackList[i]?.image || `/assets/asset-${(i % 10) + 1}.jpg`);
 
           return {
             id: p.id,
             name: p.name,
             slug: p.slug,
             price: minPrice,
+            compareAtPrice: Math.round(minPrice * 1.3),
             image,
-            category: p.category?.name || "Uncategorized",
+            category: p.category?.name || "Pulsar Streetwear",
             isNew: false,
           };
         })
-      : fallbackProducts;
+      : fallbackList;
 
   return (
-    <section className="mt-16 md:mt-20 border-t border-[#c9a96e]/20 pt-12">
+    <section className="mt-16 md:mt-20 border-t border-border/40 pt-12">
       <SectionHeading
         title="You May Also Like"
-        subtitle="More from this collection"
-        viewAllHref={categorySlug ? `/collections/${categorySlug}` : "/collections"}
+        subtitle="More from Pulsar Fashion Collection"
+        viewAllHref={categorySlug ? `/categories/${categorySlug}` : "/shop"}
       />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mt-8">

@@ -296,8 +296,8 @@ export function CheckoutForm({ settings = {} }: { settings?: Record<string, any>
             Order Confirmed!
           </h2>
           <p className="text-xs text-muted-foreground uppercase tracking-widest max-w-md mx-auto leading-relaxed font-semibold">
-            Thank you for choosing BIBAZ. Our customer support team will call you shortly to confirm
-            your delivery slots.
+            Thank you for choosing Pulsar Fashion. Our customer support team will call you shortly to confirm
+            your delivery details.
           </p>
         </div>
 
@@ -875,10 +875,10 @@ export function CheckoutForm({ settings = {} }: { settings?: Record<string, any>
                   <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
-                      onClick={() => handleApplyCoupon("BIBAZ10")}
+                      onClick={() => handleApplyCoupon("PULSAR10")}
                       className="text-[9px] font-mono font-bold px-2.5 py-1 bg-white border border-dashed border-accent text-accent hover:bg-accent/5 rounded-xs transition-all shadow-3xs cursor-pointer active:scale-95"
                     >
-                      BIBAZ10 (10% OFF)
+                      PULSAR10 (10% OFF)
                     </button>
                     <button
                       type="button"
