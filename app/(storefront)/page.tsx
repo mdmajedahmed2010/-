@@ -80,6 +80,8 @@ async function getCollections(): Promise<any[]> {
   }
 }
 
+import { ALL_PRODUCTS, CATEGORIES } from "@/lib/demo-data";
+
 export default async function HomePage() {
   const [categories, products, banners, collections] = await Promise.all([
     getCategories(),
@@ -88,10 +90,13 @@ export default async function HomePage() {
     getCollections(),
   ]);
 
+  const finalCategories = categories && categories.length > 0 ? categories : CATEGORIES;
+  const finalProducts = products && products.length > 0 ? products : ALL_PRODUCTS;
+
   return (
     <HomeUI
-      dbCategories={serializeDecimals(categories)}
-      dbProducts={serializeDecimals(products)}
+      dbCategories={serializeDecimals(finalCategories)}
+      dbProducts={serializeDecimals(finalProducts)}
       dbBanners={serializeDecimals(banners)}
       dbCollections={serializeDecimals(collections)}
     />

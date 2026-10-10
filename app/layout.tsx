@@ -90,28 +90,14 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await auth();
+  let session = null;
+  try {
+    session = await auth();
+  } catch {
+    // Auth fallback
+  }
   const userId = session?.user?.id;
-
-  const getFavicon = unstable_cache(
-    async () => {
-      try {
-        const setting = await prisma.siteSetting.findUnique({
-          where: { key: "store_favicon" },
-        });
-        if (setting && setting.value) {
-          return String(setting.value).replace(/['"]/g, "");
-        }
-      } catch {
-        // Fallback gracefully
-      }
-      return "/assets/logo.jpg";
-    },
-    ["favicon_setting"],
-    { revalidate: 3600, tags: ["site_settings"] }
-  );
-
-  const faviconUrl = await getFavicon();
+  const faviconUrl = "/assets/logo.jpg";
 
   return (
     <html

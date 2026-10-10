@@ -42,28 +42,18 @@ function getSecondaryImage(
     );
     if (second) return second;
   }
-  if (!image) return "";
+  if (!image) return "/assets/asset-1.jpg";
 
-  if (image.includes("borka 1")) return "/images/products/borka/borka 2.jpg";
-  if (image.includes("borka 2")) return "/images/products/borka/borka 3.jpg";
-  if (image.includes("borka 3")) return "/images/products/borka/borka 4.jpg";
-  if (image.includes("borka 4")) return "/images/products/borka/borka 1.jpg";
-
-  if (image.includes("bouthik 1")) return "/images/products/boutique/bouthik 2.webp";
-  if (image.includes("bouthik 2")) return "/images/products/boutique/bouthik 3.webp";
-  if (image.includes("bouthik 3")) return "/images/products/boutique/bouthik 4.webp";
-  if (image.includes("bouthik 4")) return "/images/products/boutique/bouthik 1.webp";
-
-  if (image.includes("tree prices 1")) return "/images/products/three-piece/tree prices 2.webp";
-  if (image.includes("tree prices 2")) return "/images/products/three-piece/tree prices 3.webp";
-  if (image.includes("tree prices 3")) return "/images/products/three-piece/tree prices 4.webp";
-  if (image.includes("tree prices 4")) return "/images/products/three-piece/tree prices 1.webp";
-
-  if (image.includes("0560000083852")) return "/images/products/saree/shari 2.webp";
-  if (image.includes("shari 2")) return "/images/products/saree/shari 3.webp";
-  if (image.includes("shari 3")) return "/images/products/saree/shari 4.webp";
-  if (image.includes("shari 4")) return "/images/products/saree/shari 5.webp";
-  if (image.includes("shari 5")) return "/images/products/saree/0560000083852.webp";
+  if (image === "/assets/asset-1.jpg") return "/assets/asset-2.jpg";
+  if (image === "/assets/asset-2.jpg") return "/assets/asset-1.jpg";
+  if (image === "/assets/asset-3.jpg") return "/assets/asset-6.jpg";
+  if (image === "/assets/asset-4.jpg") return "/assets/asset-5.jpg";
+  if (image === "/assets/asset-5.jpg") return "/assets/asset-4.jpg";
+  if (image === "/assets/asset-6.jpg") return "/assets/asset-3.jpg";
+  if (image === "/assets/asset-7.jpg") return "/assets/asset-8.jpg";
+  if (image === "/assets/asset-8.jpg") return "/assets/asset-7.jpg";
+  if (image === "/assets/asset-9.jpg") return "/assets/asset-10.jpg";
+  if (image === "/assets/asset-10.jpg") return "/assets/asset-9.jpg";
 
   return image;
 }

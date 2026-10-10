@@ -80,7 +80,7 @@ function ImageWithSkeleton({
         alt={alt}
         fill
         sizes={sizes}
-        className={`${className} transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
+        className={`${className} transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-90"}`}
         onLoad={() => setLoaded(true)}
       />
     </>

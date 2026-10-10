@@ -15,6 +15,7 @@ import type { LookbookLook } from "@/components/home/lookbook-section";
 import type { CollectionShowcaseItem } from "@/components/home/collections-showcase";
 import type { ArrivalsProduct } from "@/components/home/new-arrivals-grid";
 import type { Testimonial } from "@/components/home/testimonials-carousel";
+import { ALL_PRODUCTS, CATEGORIES } from "@/lib/demo-data";
 
 /* ──────────────── Dynamic Imports with Loading Skeletons ──────────────── */
 
@@ -143,23 +144,23 @@ const defaultHeroSlides: HeroSlide[] = [
     image: "/assets/banner.jpg",
     title: "REPRESENT OWNERS CLUB",
     subtitle: "Heavyweight 380 GSM Streetwear Fleece Hoodies in Barcelona Khaki, Brooklyn Navy & Real Madrid.",
-    link: "/categories/hoodies-winter-wear",
+    link: "/categories/hoodies",
     overline: "NEW WINTER DROP 2026",
     color: "from-black/75",
   },
   {
-    image: "/assets/762944474_702046839352723_3350410497500588648_n.jpg",
+    image: "/assets/asset-1.jpg",
     title: "GIVENCHY DUAL-TONE POLO",
     subtitle: "Viral textured collar drop polo with premium silicon detailing. 5 trending shades available.",
-    link: "/categories/viral-polo-shirts",
+    link: "/categories/polo-shirts",
     overline: "VIRAL LUXURY EDIT",
     color: "from-black/70",
   },
   {
-    image: "/assets/641214084_1638290373815340_8050961803738096323_n.jpg",
+    image: "/assets/asset-3.jpg",
     title: "SAVAGE MODE DROP SHOULDER",
     subtitle: "240+ GSM Heavy Combed Cotton with Ruthless Ambition High-Density Puff Print.",
-    link: "/categories/drop-shoulder-t-shirts",
+    link: "/categories/drop-shoulder",
     overline: "RAW STREETWEAR AMBITION",
     color: "from-black/70",
   },
@@ -168,38 +169,38 @@ const defaultHeroSlides: HeroSlide[] = [
 const defaultCollections: CollectionShowcaseItem[] = [
   {
     title: "Viral Polo Shirts",
-    image: "/assets/762944474_702046839352723_3350410497500588648_n.jpg",
-    href: "/categories/viral-polo-shirts",
+    image: "/assets/asset-1.jpg",
+    href: "/categories/polo-shirts",
     tag: "TRENDING VIRAL EDIT",
   },
   {
     title: "Heavy Drop Shoulder",
-    image: "/assets/641214084_1638290373815340_8050961803738096323_n.jpg",
-    href: "/categories/drop-shoulder-t-shirts",
+    image: "/assets/asset-3.jpg",
+    href: "/categories/drop-shoulder",
     tag: "240 GSM COMBED COTTON",
   },
   {
     title: "Streetwear Hoodies",
     image: "/assets/banner.jpg",
-    href: "/categories/hoodies-winter-wear",
+    href: "/categories/hoodies",
     tag: "OWNERS CLUB WINTER DROP",
   },
   {
     title: "Club & Street Jerseys",
-    image: "/assets/731105049_928173426372134_1899558913386008985_n.jpg",
-    href: "/categories/club-street-jerseys",
+    image: "/assets/asset-9.jpg",
+    href: "/categories/jerseys",
     tag: "RETRO & MODERN KITS",
   },
   {
     title: "Wholesale Lots (পাইকারি)",
-    image: "/assets/764800416_1450257009892015_6168864455209772186_n.jpg",
-    href: "/categories/wholesale-lots",
+    image: "/assets/asset-5.jpg",
+    href: "/categories/wholesale",
     tag: "NAGOR PLAZA WHOLESALE LOTS",
   },
   {
     title: "Savage Mode Collection",
-    image: "/assets/641520138_1270275811776950_5581979920153867664_n.jpg",
-    href: "/products/savage-mode-drop-shoulder-t-shirt-arctic-white",
+    image: "/assets/asset-6.jpg",
+    href: "/products/savage-mode-drop-shoulder-tshirt-arctic-white",
     tag: "HIGH-DENSITY PUFF PRINT",
   },
 ];
@@ -241,144 +242,119 @@ export function HomeUI({
   dbBanners?: any[];
   dbCollections?: any[];
 }) {
-  /* ── Map ALL database categories to UI ── */
-  const mappedCategories: CategoryItem[] = dbCategories.map((c, i) => {
-    const fallbackImages = [
-      "/assets/762944474_702046839352723_3350410497500588648_n.jpg",
-      "/assets/641214084_1638290373815340_8050961803738096323_n.jpg",
-      "/assets/731105049_928173426372134_1899558913386008985_n.jpg",
-      "/assets/banner.jpg",
-      "/assets/764800416_1450257009892015_6168864455209772186_n.jpg",
-    ];
-    return {
-      name: c.name,
-      slug: c.slug,
-      productCount: c._count?.products || 0,
-      image: c.image || fallbackImages[i % fallbackImages.length],
-    };
-  });
+  /* ── Map categories to UI (always fallback to CATEGORIES if empty) ── */
+  const sourceCategories = dbCategories && dbCategories.length > 0 ? dbCategories : CATEGORIES;
+  const mappedCategories: CategoryItem[] = sourceCategories.map((c: any, i: number) => ({
+    name: c.name,
+    slug: c.slug,
+    productCount: c._count?.products || c.productCount || 5,
+    image: c.image || `/assets/asset-${(i % 10) + 1}.jpg`,
+  }));
 
-  /* ── Map database products to UI ── */
-  const mappedProducts: ArrivalsProduct[] = dbProducts.slice(0, 8).map((p) => {
-    const variantPrice = p.variants?.[0]?.price ? Number(p.variants[0].price) : Number(p.basePrice);
+  /* ── Map products to UI (always fallback to ALL_PRODUCTS if empty) ── */
+  const sourceProducts = dbProducts && dbProducts.length > 0 ? dbProducts : ALL_PRODUCTS;
+  const mappedProducts: ArrivalsProduct[] = sourceProducts.slice(0, 8).map((p: any, i: number) => {
+    const variantPrice = p.variants?.[0]?.price ? Number(p.variants[0].price) : Number(p.price || p.basePrice || 750);
     const variantImages = p.variants?.[0]?.images;
+    const prodImg =
+      Array.isArray(variantImages) && variantImages.length > 0
+        ? variantImages[0]
+        : (p.image || `/assets/asset-${(i % 10) + 1}.jpg`);
+
     return {
-      id: p.id,
+      id: p.id || `prod-${i}`,
       name: p.name,
       slug: p.slug,
       price: variantPrice,
-      compareAtPrice: Math.round(variantPrice * 1.3),
-      image:
-        Array.isArray(variantImages) && variantImages.length > 0
-          ? variantImages[0]
-          : "/assets/762944474_702046839352723_3350410497500588648_n.jpg",
-      category: p.category?.name || "Streetwear",
-      isNew: true,
+      compareAtPrice: p.compareAtPrice || Math.round(variantPrice * 1.3),
+      image: prodImg,
+      category: p.category?.name || p.category || "Streetwear",
+      isNew: p.isNew ?? true,
     };
   });
 
-  /* ── Lookbook looks ── */
-  const lookbookLooks: LookbookLook[] =
-    dbProducts.length >= 3
-      ? dbProducts.slice(0, 3).map((p, i) => {
-          const variantPrice = p.variants?.[0]?.price
-            ? Number(p.variants[0].price)
-            : Number(p.basePrice);
-          const variantImages = p.variants?.[0]?.images;
-          const tags = ["STREETWEAR LUXE", "HEAVY COTTON", "WINTER EDIT"];
-          return {
-            id: p.id,
-            image:
-              Array.isArray(variantImages) && variantImages.length > 0
-                ? variantImages[0]
-                : "/assets/banner.jpg",
-            title: p.category?.name || "Exclusive Drop",
-            subtitle: p.name,
-            slug: p.slug,
-            price: variantPrice,
-            tag: tags[i % 3] as string,
-          };
-        })
-      : [
-          {
-            id: "look1",
-            image: "/assets/762944474_702046839352723_3350410497500588648_n.jpg",
-            title: "Viral Polo Shirts",
-            subtitle: "Viral Givenchy Dual-Tone Luxury Polo - Jet Black",
-            slug: "givenchy-dual-tone-luxury-polo-black",
-            price: 1150,
-            tag: "VIRAL HIT",
-          },
-          {
-            id: "look2",
-            image: "/assets/641214084_1638290373815340_8050961803738096323_n.jpg",
-            title: "Drop Shoulder T-Shirts",
-            subtitle: "Savage Mode Drop Shoulder T-Shirt - Jet Black",
-            slug: "savage-mode-drop-shoulder-t-shirt-black",
-            price: 750,
-            tag: "240 GSM HEAVY",
-          },
-          {
-            id: "look3",
-            image: "/assets/banner.jpg",
-            title: "Hoodies & Winter Wear",
-            subtitle: "Represent Owners Club Heavyweight Hoodie",
-            slug: "represent-owners-club-hoodie-barcelona",
-            price: 1650,
-            tag: "WINTER DROP",
-          },
-        ];
+  /* ── Lookbook looks (guaranteed working asset paths) ── */
+  const lookbookLooks: LookbookLook[] = [
+    {
+      id: "look1",
+      image: "/assets/asset-1.jpg",
+      title: "Viral Polo Shirts",
+      subtitle: "Viral Givenchy Dual-Tone Luxury Polo - Slate Blue",
+      slug: "viral-givenchy-dual-tone-polo-slate-blue",
+      price: 750,
+      tag: "VIRAL HIT",
+    },
+    {
+      id: "look2",
+      image: "/assets/asset-3.jpg",
+      title: "Drop Shoulder T-Shirts",
+      subtitle: "Savage Mode Heavy Cotton Drop Shoulder - Jet Black",
+      slug: "savage-mode-drop-shoulder-tshirt-jet-black",
+      price: 550,
+      tag: "240 GSM HEAVY",
+    },
+    {
+      id: "look3",
+      image: "/assets/banner.jpg",
+      title: "Hoodies & Winter Wear",
+      subtitle: "Represent Owners Club Heavyweight Hoodie",
+      slug: "represent-owners-club-barcelona-hoodie-khaki",
+      price: 1250,
+      tag: "WINTER DROP",
+    },
+  ];
 
-  /* ── Hero Slides: DB banners first, fallback to defaults if none ── */
+  /* ── Hero Slides: DB banners first, fallback to defaults ── */
   const heroSlides: HeroSlide[] =
-    dbBanners.length > 0
+    dbBanners && dbBanners.length > 0
       ? dbBanners.map((banner: any) => ({
           image: banner.content?.image || "/assets/banner.jpg",
           title: banner.title || "",
           subtitle: banner.subtitle || "",
-          link: banner.content?.link || "/",
+          link: banner.content?.link || "/shop",
           overline: banner.content?.overline || "NEW DROP",
           color: banner.content?.color || "from-black/75",
         }))
       : defaultHeroSlides;
 
-  /* ── Collections: DB collections first, fallback to defaults if none ── */
+  /* ── Collections: DB collections first, fallback to defaults ── */
   const allCollections: CollectionShowcaseItem[] =
-    dbCollections.length > 0
-      ? dbCollections.map((c: any) => ({
+    dbCollections && dbCollections.length > 0
+      ? dbCollections.map((c: any, i: number) => ({
           title: c.name,
           image:
-            c.image ||
-            "https://res.cloudinary.com/dnbol4pey/image/upload/f_auto,q_auto/v1783961964/bibaz/products/0bcafce4-8d43-4f3e-a1c2-59642e51c611.png",
-          href: `/collections/${c.slug}`,
+            c.image && !c.image.includes("cloudinary")
+              ? c.image
+              : (defaultCollections[i % defaultCollections.length]?.image || "/assets/asset-1.jpg"),
+          href: `/categories/${c.slug}`,
           tag: c.description?.toUpperCase() || c.name.toUpperCase(),
         }))
       : defaultCollections;
 
   return (
     <div className="flex flex-col bg-[#fdfcfa] overflow-hidden">
-      {/* 1. HERO — DB banners (with fallback to defaults) */}
+      {/* 1. HERO SLIDER */}
       <HeroSlider slides={heroSlides} />
 
-      {/* 2. TRUST BADGES — Lightweight, eager */}
+      {/* 2. TRUST BADGES */}
       <TrustBadges />
 
-      {/* 3. CATEGORY GRID — Lazy loaded */}
+      {/* 3. CATEGORY GRID */}
       <CategoryGrid categories={mappedCategories} />
 
-      {/* 4. NEW ARRIVALS — Lazy loaded */}
-      <NewArrivalsGrid products={mappedProducts} />
-
-      {/* 5. LOOKBOOK — Lazy loaded */}
+      {/* 4. LOOKBOOK / EDITORIAL SHOWCASE */}
       <LookbookSection looks={lookbookLooks} />
 
-      {/* 6. ALL COLLECTIONS — Lazy loaded */}
+      {/* 5. TRENDING STREETWEAR DROPS / PRODUCTS SECTION (Right before collections) */}
+      <NewArrivalsGrid products={mappedProducts} />
+
+      {/* 6. ALL COLLECTIONS */}
       <CollectionsShowcase collections={allCollections} />
 
-      {/* 7. TESTIMONIALS — Lazy loaded */}
+      {/* 7. TESTIMONIALS */}
       <TestimonialsCarousel testimonials={testimonials} />
 
-      {/* 8. SHORT BRAND STORY — Lazy loaded */}
+      {/* 8. SHORT BRAND STORY */}
       <EditorialSection />
     </div>
   );

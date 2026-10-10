@@ -10,6 +10,8 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
+import { ALL_PRODUCTS, CATEGORIES } from "@/lib/demo-data";
+
 function createDummyPrisma() {
   const dummy: any = new Proxy({} as any, {
     get(target, prop) {
@@ -41,25 +43,48 @@ function createDummyPrisma() {
         get(modelTarget, modelProp) {
           if (typeof modelProp === "symbol") return undefined;
 
-          // Return an async function for any model method (findMany, findUnique, findFirst, create, etc.)
+          // Return an async function for any model method
           return async (...args: any[]) => {
-            // Log access during build to see what is queried
-            console.log(`[PRISMA MOCK] Called: ${String(prop)}.${String(modelProp)}`);
+            const model = String(prop).toLowerCase();
+            const method = String(modelProp);
 
-            // Return appropriate empty types based on the method name
-            if (modelProp === "findMany") {
+            if (model === "product") {
+              if (method === "findMany") return ALL_PRODUCTS;
+              if (method === "findUnique" || method === "findFirst") {
+                const slug = args[0]?.where?.slug;
+                const id = args[0]?.where?.id;
+                return ALL_PRODUCTS.find((p) => (slug && p.slug === slug) || (id && p.id === id)) || ALL_PRODUCTS[0];
+              }
+              if (method === "count") return ALL_PRODUCTS.length;
+            }
+
+            if (model === "category") {
+              if (method === "findMany") return CATEGORIES;
+              if (method === "findUnique" || method === "findFirst") {
+                const slug = args[0]?.where?.slug;
+                return CATEGORIES.find((c) => c.slug === slug) || CATEGORIES[0];
+              }
+              if (method === "count") return CATEGORIES.length;
+            }
+
+            if (model === "sitesetting") {
+              if (method === "findUnique") {
+                const key = args[0]?.where?.key;
+                if (key === "store_name") return { key: "store_name", value: "Pulsar Fashion" };
+                if (key === "favicon_url") return { key: "favicon_url", value: "/favicon.ico" };
+                return null;
+              }
+              if (method === "findMany") return [
+                { key: "store_name", value: "Pulsar Fashion" },
+                { key: "store_tagline", value: "Premium Streetwear & Wholesale Hub" },
+              ];
+            }
+
+            if (method === "findMany") {
               return [];
             }
-            if (modelProp === "count") {
+            if (method === "count") {
               return 0;
-            }
-
-            // For settings, return a default favicon if requested during build
-            if (prop === "siteSetting" && modelProp === "findUnique") {
-              const whereKey = args[0]?.where?.key;
-              if (whereKey === "favicon_url") {
-                return { key: "favicon_url", value: "/favicon.ico" };
-              }
             }
 
             return null;
@@ -72,9 +97,8 @@ function createDummyPrisma() {
 }
 
 function createPrismaClient(): PrismaClient {
-  // If we are in the Next.js build phase, return a dummy mock proxy to prevent database connection attempts
-  if (process.env.NEXT_PHASE === "phase-production-build") {
-    console.log("[PRISMA] Next.js build phase detected. Bypassing database connection.");
+  // If no DATABASE_URL or during Next.js build, return the dummy client immediately with ZERO network latency
+  if (!process.env.DATABASE_URL || process.env.NEXT_PHASE === "phase-production-build") {
     return createDummyPrisma() as unknown as PrismaClient;
   }
 
@@ -83,8 +107,7 @@ function createPrismaClient(): PrismaClient {
   let user = process.env.DB_USER || "root";
   let password = process.env.DB_PASSWORD || "";
   let database = process.env.DB_NAME || "bibaz";
-  let connectionLimit = 10; // Default connection pool limit (SOP buffer strategy)
-
+  let connectionLimit = 10;
   let useSsl = false;
 
   const dbUrl = process.env.DATABASE_URL;
@@ -97,20 +120,12 @@ function createPrismaClient(): PrismaClient {
         useSsl = true;
       }
 
-      // PRODUCTION HOSTINGER OVERRIDE:
-      // If running in production on the server, force localhost/127.0.0.1 to avoid
-      // external networking latency & Hostinger WAF (ModSecurity / BitNinja) from blocking
-      // concurrent DB queries (which throws 403 Forbidden and crashes the process).
-      // Bypass this override if deploying on Vercel (process.env.VERCEL is defined).
       if (
         process.env.NODE_ENV === "production" &&
         !process.env.VERCEL &&
         host !== "127.0.0.1" &&
         host !== "localhost"
       ) {
-        console.log(
-          `[PRISMA] Production server detected. Overriding host ${host} with 127.0.0.1 for high-performance local loopback.`
-        );
         host = "127.0.0.1";
       }
 
@@ -119,7 +134,6 @@ function createPrismaClient(): PrismaClient {
       password = url.password;
       database = url.pathname.replace("/", "");
 
-      // Dynamically extract connection limit from connection_limit search param
       const limitParam = url.searchParams.get("connection_limit");
       if (limitParam) {
         connectionLimit = parseInt(limitParam, 10);
@@ -129,22 +143,8 @@ function createPrismaClient(): PrismaClient {
     }
   }
 
-  // Handle local environment production host override if DATABASE_URL was not used
-  if (
-    process.env.NODE_ENV === "production" &&
-    !process.env.VERCEL &&
-    host !== "127.0.0.1" &&
-    host !== "localhost"
-  ) {
-    host = "127.0.0.1";
-  }
-
-  // PRODUCTION HOSTINGER CONNECTION POOL OPTIMIZATION:
   if (process.env.NODE_ENV === "production" && !process.env.VERCEL) {
     connectionLimit = Math.min(connectionLimit, 3);
-    console.log(
-      `[PRISMA] Production environment detected: Capped connectionLimit per process to ${connectionLimit} to prevent Hostinger database connection exhaustion.`
-    );
   }
 
   const adapterOptions: any = {
@@ -154,8 +154,8 @@ function createPrismaClient(): PrismaClient {
     password,
     database,
     connectionLimit,
-    connectTimeout: 15000,
-    acquireTimeout: 15000,
+    connectTimeout: 3000,
+    acquireTimeout: 3000,
     idleTimeout: 10000,
     allowPublicKeyRetrieval: true,
   };

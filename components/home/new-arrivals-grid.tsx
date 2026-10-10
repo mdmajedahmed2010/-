@@ -81,19 +81,22 @@ export function NewArrivalsGrid({ products }: NewArrivalsGridProps) {
         >
           <div>
             <div className="flex items-center gap-3 mb-3">
-              <span className="inline-block px-3 py-1 rounded-full border border-[#c9a96e]/50 bg-[#c9a96e]/10 text-[#0f0e0d] text-[10px] uppercase tracking-[0.26em] font-bold">
-                ✦ JUST RELEASED ATELIER DROP ✦
+              <span className="inline-block px-3 py-1 rounded-full border border-accent/50 bg-accent/10 text-foreground text-[10px] uppercase tracking-[0.26em] font-bold">
+                ✦ PULSAR ORIGINAL DROPS ✦
               </span>
             </div>
-            <h2 className="text-3xl sm:text-4xl md:text-[42px] font-bold tracking-tight text-[#0f0e0d] font-heading">
-              New Arrivals
+            <h2 className="text-3xl sm:text-4xl md:text-[42px] font-bold tracking-tight text-foreground font-heading">
+              Featured Products & Drops
             </h2>
+            <p className="text-sm text-muted-foreground mt-2 font-sans max-w-xl">
+              240+ GSM কম্বড কটন, ভাইরাল পোলো ও এক্সক্লুসিভ ড্রপ শোল্ডার টি-শার্ট। খুচরা ও পাইকারি উভয় অর্ডার গ্রহণযোগ্য।
+            </p>
           </div>
           <Link
-            href="/collections/new-arrivals"
-            className="text-xs font-bold uppercase tracking-[0.22em] text-[#0f0e0d] border-b-2 border-[#c9a96e] hover:border-[#0f0e0d] pb-1.5 transition-colors inline-flex items-center gap-2 cursor-pointer group/link"
+            href="/shop"
+            className="text-xs font-bold uppercase tracking-[0.22em] text-foreground border-b-2 border-accent hover:border-foreground pb-1.5 transition-colors inline-flex items-center gap-2 cursor-pointer group/link"
           >
-            Browse All Items <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 text-[#c9a96e] group-hover/link:text-[#0f0e0d]" />
+            Browse All Products <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5 text-accent group-hover/link:text-foreground" />
           </Link>
         </motion.div>
 
